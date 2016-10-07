@@ -14,9 +14,9 @@ module.exports = function (environment) {
         // e.g. 'with-controller': true
       }
       // TODO Do we want to disable prototype extension?
-      //EXTEND_PROTOTYPES: {
-      //  Date: false
-      //}
+      // EXTEND_PROTOTYPES: {
+      //   Date: false
+      // }
     },
 
     APP: {

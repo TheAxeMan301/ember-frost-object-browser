@@ -6,8 +6,9 @@ var Router = Ember.Router.extend({
 })
 
 Router.map(function () {
-  this.route('lts')
   this.route('menu', {path: '/'})
+  this.route('lts')
+  this.route('custom-components')
   this.route('datamodel')
 })
 

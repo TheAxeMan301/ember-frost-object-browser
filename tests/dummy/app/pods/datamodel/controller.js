@@ -2,7 +2,6 @@ import Ember from 'ember'
 import FrostListMixin from 'ember-frost-list/mixins/frost-list-mixin'
 
 export default Ember.Controller.extend(FrostListMixin, {
-  
   buttonPriority: Ember.computed('xxx', function () {
     return 'primary'
   }),
@@ -118,7 +117,7 @@ export default Ember.Controller.extend(FrostListMixin, {
       })
     },
 
-    onFilterFormChange(formValue) {
+    onFilterFormChange (formValue) {
       let activeFacets = []
       const keys = Object.keys(formValue)
       keys.forEach((key) => {
@@ -131,5 +130,4 @@ export default Ember.Controller.extend(FrostListMixin, {
       this.set('activeFacets', activeFacets)
     }
   }
-
 })

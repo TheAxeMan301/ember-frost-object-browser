@@ -1,6 +1,7 @@
 {
   "extends": ["frost-standard"],
   "rules": {
-    "valid-jsdoc": [0]
+    "valid-jsdoc": [0],
+    "complexity": "off"
   }
 }

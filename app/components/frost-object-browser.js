@@ -1,1 +1,1 @@
-export { default } from 'ember-frost-object-browser/components/frost-object-browser';
+export { default } from 'ember-frost-object-browser/components/frost-object-browser'

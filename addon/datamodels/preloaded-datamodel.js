@@ -75,7 +75,7 @@ export default BaseDatamodel.extend({
     if (filterObject && filterObject.type in supportedFilters) {
       return supportedFilters[filterObject.type](filterObject)
     }
-    return function (/*item*/) {
+    return function (/* item */) {
       return true
     }
   },
@@ -98,6 +98,7 @@ export default BaseDatamodel.extend({
    */
   getDefaultSortFunc (sortObject) {
     let key = sortObject.key
+    let descending = sortObject.descending
     return function (itemA, itemB) {
       let valA = itemA[0][key]
       let valB = itemB[0][key]

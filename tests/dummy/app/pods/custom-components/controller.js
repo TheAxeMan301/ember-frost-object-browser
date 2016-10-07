@@ -103,7 +103,7 @@ export default Ember.Controller.extend(FrostListMixin, {
       })
     },
 
-    onFilterFormChange(formValue) {
+    onFilterFormChange (formValue) {
       let activeFacets = []
       const keys = Object.keys(formValue)
       keys.forEach((key) => {
