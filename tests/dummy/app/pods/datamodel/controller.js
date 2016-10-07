@@ -1,8 +1,12 @@
 import Ember from 'ember'
 import FrostListMixin from 'ember-frost-list/mixins/frost-list-mixin'
-import {generateFacetView} from 'ember-frost-bunsen/utils'
 
 export default Ember.Controller.extend(FrostListMixin, {
+  
+  buttonPriority: Ember.computed('xxx', function () {
+    return 'primary'
+  }),
+
   activeFacets: [],
 
   listConfig: {
@@ -58,13 +62,24 @@ export default Ember.Controller.extend(FrostListMixin, {
     }
   },
 
-  bunsenView: generateFacetView(
-    [{
-      model: 'id'
-    }, {
-      model: 'alias'
+  bunsenView: {
+    version: '1.0',
+    type: 'form',
+    'rootContainers': [{
+      label: 'Main',
+      container: 'main'
+    }],
+    containers: [{
+      id: 'main',
+      rows: [[{
+        model: 'id',
+        label: 'element Id'
+      }], [{
+        model: 'alias'
+      }]
+      ]
     }]
-  ),
+  },
 
   actions: {
     triggerAction () {
@@ -116,4 +131,5 @@ export default Ember.Controller.extend(FrostListMixin, {
       this.set('activeFacets', activeFacets)
     }
   }
+
 })

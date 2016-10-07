@@ -1,22 +1,88 @@
 <div class="frost-object-browser-info-bar">
-  {{component header}}
+  {{#if customHeader}}
+    {{component customHeader}}
+  {{else}}
+    {{frost-info-bar
+      icon=(component 'frost-icon'
+        icon='list-medium'
+        pack='frost'
+      )
+      title='info-title'
+      summary=(component 'text-box'
+        isVisible=isSummaryVisible
+        text='placeholder for summary'
+      )
+      scope=(component 'text-box'
+        isVisible=isScopeVisible
+        text='placeholder for scope'
+      )
+      controls=(array
+        (component 'frost-button'
+          isVisible=isCreateVisible
+          icon='infobar-create'
+          text='Create'
+          onClick=(action 'onCreate')
+        )
+      )
+    }}
+  {{/if}}
 </div>
 
 <div class="frost-object-browser-body">
+  <div class="frost-object-browser-facets">
+    <div class="frost-object-browser-facets-header">Refined by</div>
+    {{#if customFacets}}
+      {{component customFacets}}
+    {{else}}
+      {{frost-bunsen-form
+        autofocus=false
+        bunsenModel=filterBunsenModel
+        bunsenView=filterBunsenView
+        onChange=(action "onFilterFormChange")
+      }}
+    {{/if}}
+  </div>
 
-    <div class="frost-object-browser-facets">
-        <div class="frost-object-browser-facets-header">Refined by</div>
-        {{component facets}}
-    </div>
-
-    <div class="frost-object-browser-content">
-      {{component content
+  <div class="frost-object-browser-content">
+    {{#if customContent}}
+      {{component customContent
         items=items
       }}
-        <div class="frost-object-browser-actions">
-          {{#each controls as |control|}}
-            {{component control}}
-          {{/each}}
-        </div>
+    {{else}}
+      {{frost-list
+        onSelect=(action 'selectItem')
+        item=(component
+          (if customListItem
+            customListItem
+            (component 'frost-object-browser-list-item'
+              bunsenModel=listItemBunsenModel
+              bunsenView=listItemBunsenView
+            )
+          )
+          onCollapse=(action 'collapseItem')
+          onExpand=(action 'expandItem')
+        )
+        expansion=(component 'frost-list-expansion'
+          onCollapseAll=(action 'collapseItems')
+          onExpandAll=(action 'expandItems')
+        )
+        sorting=(component 'frost-sort'
+          sortOrder=activeSorting
+          properties=sortableProperties
+          onChange=(action 'sortItems')
+        )
+      }}
+    {{/if}}
+    <div class="frost-object-browser-actions">
+      {{#if customControls}}
+        {{#each customControls as |control|}}
+          {{component control}}
+        {{/each}}
+      {{else}}
+        {{#each controls as |control|}}
+          {{component control}}
+        {{/each}}
+      {{/if}}
     </div>
+  </div>
 </div>

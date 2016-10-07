@@ -1,6 +1,6 @@
 {{frost-object-browser
   items=sortedItems
-  header=(component 'frost-info-bar'
+  customHeader=(component 'frost-info-bar'
     icon=(component 'frost-icon'
       icon='list-medium'
       pack='frost'
@@ -23,13 +23,13 @@
       )
     )
   )
-  facets = (component 'frost-bunsen-form'
+  customFacets=(component 'frost-bunsen-form'
     autofocus=false
     bunsenModel=bunsenModel
     bunsenView=bunsenView
     onChange=(action "onFilterFormChange")
   )
-  content=(component 'frost-list'
+  customContent=(component 'frost-list'
     onSelect=(action 'selectItem')
     item=(component 'lts/user-list-item'
       onCollapse=(action 'collapseItem')
@@ -45,7 +45,7 @@
       onChange=(action 'sortItems')
     )
   )
-  controls=(array
+  customControls=(array
     (component 'frost-button'
       disabled=(eq selectedItemsNumber 0)
       priority="secondary"
