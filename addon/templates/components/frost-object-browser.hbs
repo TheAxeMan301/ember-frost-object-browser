@@ -4,21 +4,13 @@
   {{else}}
     {{frost-info-bar
       icon=(component 'frost-icon'
-        icon='list-medium'
-        pack='frost'
+        icon=config.infoBar.icon.name
+        pack=config.infoBar.icon.pack
       )
-      title='info-title'
-      summary=(component 'text-box'
-        isVisible=isSummaryVisible
-        text='placeholder for summary'
-      )
-      scope=(component 'text-box'
-        isVisible=isScopeVisible
-        text='placeholder for scope'
-      )
+      title=config.infoBar.title
+      summary=config.infoBar.summary
       controls=(array
         (component 'frost-button'
-          isVisible=isCreateVisible
           icon='infobar-create'
           text='Create'
           onClick=(action 'onCreate')
@@ -79,8 +71,8 @@
           {{component control}}
         {{/each}}
       {{else}}
-        {{#each controls as |control|}}
-          {{component control}}
+        {{#each actionBarButtons as |control|}}
+          {{frost-button
         {{/each}}
       {{/if}}
     </div>

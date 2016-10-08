@@ -15,3 +15,13 @@ Datamodel demo
     text='Component helper'
   }}
 </div>
+<div>
+  {{component
+    (component 'frost-button'
+      "posArg"
+      priority=nestedButtonPriority
+      size='medium'
+      text='Nested component helpers'
+    )
+  }}
+</div>
