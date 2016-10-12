@@ -6,7 +6,7 @@ import Ember from 'ember'
  * All necessary public methods used by object browser are present though.
  */
 
-export default Ember.Object.create({
+export default Ember.Object.extend({
   /**
    * The object browser gets its data with this method.
    * @param {Object} dataQuery dataQuery object
@@ -35,6 +35,14 @@ export default Ember.Object.create({
   },
 
   /**
+   * Object browser calls this on exiting in case any cleanup needs to be done.
+   */
+  unsubscribe () {
+    this.set('subscriptionQuery', undefined)
+    this.set('subscriptionCallback', undefined)
+  },
+
+  /**
    * Helper for subscription functionality.
    * Not called by object browser directly, but can
    * be used by extending classes for convenience.
@@ -60,10 +68,8 @@ export default Ember.Object.create({
   },
 
   /**
-   * Object browser calls this on exiting in case any cleanup needs to be done.
+   * Configure the data model. Object browser passes a ref to itself.
    */
-  unsubscribe () {
-    this.set('subscriptionQuery', undefined)
-    this.set('subscriptionCallback', undefined)
+  configure (/* object-browser */) {
   }
 })

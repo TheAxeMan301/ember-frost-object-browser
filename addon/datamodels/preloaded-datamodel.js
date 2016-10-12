@@ -1,5 +1,5 @@
 import Ember from 'ember'
-import BaseDatamodel from 'datamodels/base-datamodel'
+import BaseDatamodel from './base-datamodel'
 import _ from 'lodash/lodash'
 
 /**
@@ -8,8 +8,7 @@ import _ from 'lodash/lodash'
  */
 
 export default BaseDatamodel.extend({
-  data: [], // This will be the actual data
-  // TODO: observe it and tie to subscription
+  items: [], // This will be the actual data
 
   /**
    * A filter that simply does an ===
@@ -73,7 +72,7 @@ export default BaseDatamodel.extend({
   getFilterFunc (filterObject) {
     let supportedFilters = this.get('supportedFilters')
     if (filterObject && filterObject.type in supportedFilters) {
-      return supportedFilters[filterObject.type](filterObject)
+      return this.get(supportedFilters[filterObject.type])(filterObject)
     }
     return function (/* item */) {
       return true
@@ -85,10 +84,10 @@ export default BaseDatamodel.extend({
    * Custom filters can be added here.
    */
   supportedFilters: {
-    string: this.getStringFilter,
-    equals: this.getEqualsFilter,
-    and: this.getAndFilter,
-    or: this.getOrFilter
+    string: 'getStringFilter',
+    equals: 'getEqualsFilter',
+    and: 'getAndFilter',
+    or: 'getOrFilter'
   },
 
   /**
@@ -161,9 +160,9 @@ export default BaseDatamodel.extend({
    * The sort function itself should return a key value.
    */
   supportedSorts: {
-    default: this.getDefaultSort,
-    string: this.getStringSort,
-    number: this.getNumberSort
+    default: 'getDefaultSort',
+    string: 'getStringSort',
+    number: 'getNumberSort'
   },
 
   doSorting (data, sortDefList) {
@@ -173,7 +172,7 @@ export default BaseDatamodel.extend({
     let supportedSorts = this.get('supportedSorts')
     sortDefList.reverse()
     for (let i = 0; i < sortDefList.length; i++) {
-      let sortFunc = supportedSorts[sortDefList[i].type](sortDefList[i])
+      let sortFunc = this.get(supportedSorts[sortDefList[i].type])(sortDefList[i])
       sortData.sort(sortFunc)
     }
     sortDefList.reverse()
@@ -183,7 +182,7 @@ export default BaseDatamodel.extend({
   },
 
   getData (dataQuery) {
-    let fullData = this.get('data')
+    let fullData = this.get('items')
     let filterFunc = this.getFilterFunc(dataQuery.filter)
     let filteredData = fullData.filter(filterFunc)
     let sortedData = this.doSorting(filteredData, dataQuery.sortDefs)
@@ -194,5 +193,27 @@ export default BaseDatamodel.extend({
       firstIndex: dataQuery.firstIndex,
       context: dataQuery.context
     })
+  },
+
+  /**
+   * Configure the data model. Object browser passes a ref to itself
+   */
+  configure (objectBrowser) {
+    let datamodelConfig = objectBrowser.get('config').dataAdapter
+    let itemsProp = datamodelConfig.itemsProp || 'items'
+
+    objectBrowser.addObserver(itemsProp, this, 'itemsObserver')
+
+    this.set('objectBrowser', objectBrowser)
+    this.set('itemsProp', itemsProp)
+  },
+
+  destroy () {
+    this.get('objectBrowser').removeObserver(this.get('itemsProp'), this, 'itemsObserver')
+  },
+
+  itemsObserver (objectBrowser, key) {
+    this.set('items', objectBrowser.get(key))
+    this.dataHasChanged()
   }
 })

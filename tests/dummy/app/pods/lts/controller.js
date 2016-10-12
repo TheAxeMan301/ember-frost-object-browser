@@ -17,9 +17,9 @@ export default Ember.Controller.extend({
       version: '2.0',
       type: 'form',
       cells: [{
-        model: 'alias',
+        model: 'alias'
       }, {
-        model: 'id',
+        model: 'id'
       }]
     },
     filterBunsenModel: {
@@ -30,14 +30,14 @@ export default Ember.Controller.extend({
         },
         alias: {
           type: 'string'
-        },
+        }
       }
     },
     // This gets sent to bunsen util generateFacetView()
     filterBunsenFacets: [{
       model: 'id'
     }, {
-      model: 'alias',
+      model: 'alias'
     }],
     sorting: [{
       name: 'alias'
@@ -62,7 +62,7 @@ export default Ember.Controller.extend({
     infoBar: {
       icon: {
         name: 'user-account',
-        pack: 'uac-icon-pack'
+        pack: 'frost'
       },
       title: 'User Accounts',
       subTitle: 'List of users',
@@ -85,7 +85,9 @@ export default Ember.Controller.extend({
       expanded: false
     },
     dataAdapter: {
-      // Preloaded is the default so this can even be left out
+      type: 'preloaded',    // The default, can be left out
+      itemsProp: 'items'    // Also a default
+      // If we were loading from API virtually we would have info on how to link up meta data and do paging
     }
   }
 })

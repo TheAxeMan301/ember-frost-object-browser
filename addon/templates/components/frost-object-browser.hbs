@@ -42,7 +42,8 @@
       }}
     {{else}}
       {{frost-list
-        onSelect=(action 'selectItem')
+        items=itemsFromDatamodel
+        onSelect=(action 'onSelectionChange')
         item=(component
           (if customListItem
             customListItem
@@ -61,7 +62,7 @@
         sorting=(component 'frost-sort'
           sortOrder=activeSorting
           properties=sortableProperties
-          onChange=(action 'sortItems')
+          onChange=(action 'onSortChange')
         )
       }}
     {{/if}}
@@ -70,11 +71,23 @@
         {{#each customControls as |control|}}
           {{component control}}
         {{/each}}
-      {{else}}
-        {{#each actionBarButtons as |control|}}
-          {{frost-button
-        {{/each}}
       {{/if}}
+      {{#each actionBarButtons as |control|}}
+        {{frost-button
+          disabled=control.disabled
+          priority=control.priority
+          size=control.size
+          text=control.text
+          onClick=(action actionBarButtonClick control.actionName)
+        }}
+      {{/each}}
+      {{#each actionBarButtons as |link|}}
+        {{#frost-link link.route
+          disabled=link.disabled
+        }}
+          link.text
+        {{/frost-link}}
+      {{/each}}
     </div>
   </div>
 </div>

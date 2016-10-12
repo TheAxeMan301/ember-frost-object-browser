@@ -8,7 +8,7 @@ export default Ember.Controller.extend(FrostListMixin, {
   nestedButtonPriority: Ember.computed('xxx', function () {
     return 'primary'
   }),
-  
+
   fooList: ['a', 'b', 'c'],
 
   activeFacets: [],
