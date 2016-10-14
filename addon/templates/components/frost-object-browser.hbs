@@ -13,7 +13,7 @@
         (component 'frost-button'
           icon='infobar-create'
           text='Create'
-          onClick=(action 'onCreate')
+          onClick=(action 'onActionBarButtonClick' 'onCreate')
         )
       )
     }}
@@ -42,27 +42,33 @@
       }}
     {{else}}
       {{frost-list
-        items=itemsFromDatamodel
-        onSelect=(action 'onSelectionChange')
+        items=itemsForList
         item=(component
           (if customListItem
             customListItem
             (component 'frost-object-browser-list-item'
               bunsenModel=listItemBunsenModel
               bunsenView=listItemBunsenView
+              onSelectObjectBrowser=onItemSelect
             )
           )
-          onCollapse=(action 'collapseItem')
-          onExpand=(action 'expandItem')
+          onCollapse=(action 'onCollapse')
+          onExpand=(action 'onExpand')
         )
-        expansion=(component 'frost-list-expansion'
-          onCollapseAll=(action 'collapseItems')
-          onExpandAll=(action 'expandItems')
+        expansion=(if expandable
+          (component 'frost-list-expansion'
+            onCollapseAll=(action 'onCollapseAll')
+            onExpandAll=(action 'onExpandAll')
+          )
+          undefined
         )
-        sorting=(component 'frost-sort'
-          sortOrder=activeSorting
-          properties=sortableProperties
-          onChange=(action 'onSortChange')
+        sorting=(if sortableProperties
+          (component 'frost-sort'
+            sortOrder=activeSorting
+            properties=sortableProperties
+            onChange=(action 'onSortChange')
+          )
+          undefined
         )
       }}
     {{/if}}
@@ -78,14 +84,14 @@
           priority=control.priority
           size=control.size
           text=control.text
-          onClick=(action actionBarButtonClick control.actionName)
+          onClick=(action 'onActionBarButtonClick' control.actionName)
         }}
       {{/each}}
-      {{#each actionBarButtons as |link|}}
+      {{#each actionBarLinks as |link|}}
         {{#frost-link link.route
           disabled=link.disabled
         }}
-          link.text
+          {{link.text}}
         {{/frost-link}}
       {{/each}}
     </div>

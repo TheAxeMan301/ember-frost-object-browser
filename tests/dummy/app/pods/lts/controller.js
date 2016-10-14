@@ -15,13 +15,26 @@ export default Ember.Controller.extend({
     },
     listBunsenView: {
       version: '2.0',
-      type: 'form',
+      type: 'detail',
       cells: [{
-        model: 'alias'
-      }, {
-        model: 'id'
+        children: [{
+          classNames: {
+            cell: 'small',
+            value: 'ob-input',
+            label: 'ob-label'
+          },
+          model: 'alias'
+        }, {
+          classNames: {
+            cell: 'small',
+            value: 'ob-input',
+            label: 'ob-label'
+          },
+          model: 'id'
+        }]
       }]
     },
+    expandable: true,
     filterBunsenModel: {
       type: 'object',
       properties: {
@@ -39,10 +52,12 @@ export default Ember.Controller.extend({
     }, {
       model: 'alias'
     }],
-    sorting: [{
-      name: 'alias'
+    sortProperties: [{
+      value: 'alias',
+      label: 'Alias'
     }, {
-      name: 'id'
+      value: 'id',
+      label: 'Id'
     }],
     actionBarButtons: [{
       actionName: 'onEdit',
@@ -56,12 +71,12 @@ export default Ember.Controller.extend({
     }],
     actionBarLinks: [{
       text: 'Go elsewhere',
-      route: 'elsewhere',
+      route: 'lts',
       enabled: 'single'
     }],
     infoBar: {
       icon: {
-        name: 'user-account',
+        name: 'user',
         pack: 'frost'
       },
       title: 'User Accounts',
@@ -88,6 +103,33 @@ export default Ember.Controller.extend({
       type: 'preloaded',    // The default, can be left out
       itemsProp: 'items'    // Also a default
       // If we were loading from API virtually we would have info on how to link up meta data and do paging
+    }
+  },
+
+  actions: {
+    onCreate () {
+      this.notifications.addNotification({
+        message: 'Create Action fired',
+        type: 'success',
+        autoClear: true,
+        clearDuration: 2000
+      })
+    },
+    onEdit () {
+      this.notifications.addNotification({
+        message: 'Edit Action fired',
+        type: 'success',
+        autoClear: true,
+        clearDuration: 2000
+      })
+    },
+    onDelete () {
+      this.notifications.addNotification({
+        message: 'Delete Action fired',
+        type: 'success',
+        autoClear: true,
+        clearDuration: 2000
+      })
     }
   }
 })

@@ -1,6 +1,8 @@
 import Ember from 'ember'
 import BaseDatamodel from './base-datamodel'
 import _ from 'lodash/lodash'
+import {deemberify} from 'ember-frost-bunsen/utils'
+import computed from 'ember-computed-decorators'
 
 /**
  * Data model for data that is preloaded or externally managed.
@@ -96,8 +98,8 @@ export default BaseDatamodel.extend({
    * @returns {Function} Function for sorting that returns sort key
    */
   getDefaultSortFunc (sortObject) {
-    let key = sortObject.key
-    let descending = sortObject.descending
+    let key = sortObject.value
+    let descending = sortObject.direction === ':desc'
     return function (itemA, itemB) {
       let valA = itemA[0][key]
       let valB = itemB[0][key]
@@ -117,8 +119,8 @@ export default BaseDatamodel.extend({
    * @returns {Function} Function for sorting that returns sort key
    */
   getStringSortFunc (sortObject) {
-    let key = sortObject.key
-    let descending = sortObject.descending
+    let key = sortObject.value
+    let descending = sortObject.direction === ':desc'
     return function (itemA, itemB) {
       let valA = itemA[0][key].toString().toLowerCase()
       let valB = itemB[0][key].toString().toLowerCase()
@@ -138,8 +140,8 @@ export default BaseDatamodel.extend({
    * @returns {Function} Function for sorting that returns sort key
    */
   getNumberSortFunc (sortObject) {
-    let key = sortObject.key
-    let descending = sortObject.descending
+    let key = sortObject.value
+    let descending = sortObject.direction === ':desc'
     return function (itemA, itemB) {
       let valA = parseFloat(itemA[0][key])
       valA = _.isNaN(valA) ? 0 : valA
@@ -160,9 +162,9 @@ export default BaseDatamodel.extend({
    * The sort function itself should return a key value.
    */
   supportedSorts: {
-    default: 'getDefaultSort',
-    string: 'getStringSort',
-    number: 'getNumberSort'
+    default: 'getDefaultSortFunc',
+    string: 'getStringSortFunc',
+    number: 'getNumberSortFunc'
   },
 
   doSorting (data, sortDefList) {
@@ -170,9 +172,11 @@ export default BaseDatamodel.extend({
       return [item, index]
     })
     let supportedSorts = this.get('supportedSorts')
+    let sortTypes = this.get('sortTypes')
     sortDefList.reverse()
     for (let i = 0; i < sortDefList.length; i++) {
-      let sortFunc = this.get(supportedSorts[sortDefList[i].type])(sortDefList[i])
+      let sortType = sortTypes[sortDefList[i].value] || 'default'
+      let sortFunc = this.get(supportedSorts[sortType])(sortDefList[i])
       sortData.sort(sortFunc)
     }
     sortDefList.reverse()
@@ -181,12 +185,24 @@ export default BaseDatamodel.extend({
     })
   },
 
+  @computed('items')
+  deemberifiedItems (items) {
+    let pojoArray = items
+    if (Ember.typeOf(items.toArray) === 'function') {
+      pojoArray = items.toArray()
+    }
+    return _.map(pojoArray, (item) => {
+      return deemberify(item)
+    })
+  },
+
   getData (dataQuery) {
-    let fullData = this.get('items')
+    let fullData = this.get('deemberifiedItems')
     let filterFunc = this.getFilterFunc(dataQuery.filter)
     let filteredData = fullData.filter(filterFunc)
-    let sortedData = this.doSorting(filteredData, dataQuery.sortDefs)
-    let pagedData = filteredData.slice(dataQuery.firstIndex, dataQuery.firstIndex + dataQuery.count)
+    let sortedData = this.doSorting(filteredData, dataQuery.sort)
+    let pagedData = sortedData.slice(
+      dataQuery.firstIndex, dataQuery.firstIndex + dataQuery.numPages * dataQuery.pageSize)
     return Ember.RSVP.resolve({
       data: pagedData,
       filterCount: sortedData.length,
@@ -199,13 +215,18 @@ export default BaseDatamodel.extend({
    * Configure the data model. Object browser passes a ref to itself
    */
   configure (objectBrowser) {
-    let datamodelConfig = objectBrowser.get('config').dataAdapter
+    let datamodelConfig = objectBrowser.get('config').dataAdapter || {}
     let itemsProp = datamodelConfig.itemsProp || 'items'
+    let sortTypes = datamodelConfig.sortTypes || {}
 
     objectBrowser.addObserver(itemsProp, this, 'itemsObserver')
 
-    this.set('objectBrowser', objectBrowser)
-    this.set('itemsProp', itemsProp)
+    this.setProperties({
+      items: objectBrowser.get(itemsProp),
+      objectBrowser,
+      itemsProp,
+      sortTypes
+    })
   },
 
   destroy () {

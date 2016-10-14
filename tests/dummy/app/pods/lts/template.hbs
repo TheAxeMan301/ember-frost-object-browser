@@ -1,4 +1,7 @@
 {{frost-object-browser
   config=objectBrowserConfig
-  items=model
+  items=model.resources
+  onCreate=(action 'onCreate')
+  onEdit=(action 'onEdit')
+  onDelete=(action 'onDelete')
 }}

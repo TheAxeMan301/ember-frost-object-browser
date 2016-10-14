@@ -30,8 +30,10 @@ export default Ember.Object.extend({
    * @param {Function} callback Callback that gets called on subscription changes
    */
   subscribe (dataQuery, callback) {
-    this.set('subscriptionQuery', dataQuery)
-    this.set('subscriptionCallback', callback)
+    this.setProperties({
+      subscriptionQuery: dataQuery,
+      subscriptionCallback: callback
+    })
   },
 
   /**
@@ -40,6 +42,10 @@ export default Ember.Object.extend({
   unsubscribe () {
     this.set('subscriptionQuery', undefined)
     this.set('subscriptionCallback', undefined)
+    this.setProperties({
+      subscriptionQuery: undefined,
+      subscriptionCallback: undefined
+    })
   },
 
   /**

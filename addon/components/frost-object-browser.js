@@ -9,15 +9,15 @@ export default Ember.Component.extend({
   layout,
   classNames: ['frost-object-browser'],
 
-  itemsFromDataModel: [],
+  itemsFromDatamodel: [],
 
   init () {
     this._super(...arguments)
 
     console.log('object browser init')
 
-    let initialState = _.cloneDeep(this.get('config').initialState || {})
-    _.defaults(initialState, {
+    let currentState = _.cloneDeep(this.get('config').initialState || {})
+    _.defaults(currentState, {
       sort: [],
       filter: {},
       expanded: false,
@@ -26,9 +26,13 @@ export default Ember.Component.extend({
       numPages: 1,
       context: 0
     })
-    this.set('currentState', initialState)
+    this.setProperties({
+      currentState,
+      activeSorting: currentState.sort
+    })
 
     this.setupDatamodel()
+    this.populate()
   },
 
   setupDatamodel () {
@@ -59,10 +63,26 @@ export default Ember.Component.extend({
     })
   },
 
+  goToFirstPage () {
+    let currentState = this.get('currentState')
+    currentState.firstIndex = 0
+    currentState.numPages = 1
+    this.notifyPropertyChange('currentState')
+  },
+
+  changeContext () {
+    let currentState = this.get('currentState')
+    currentState.context += 1
+    this.notifyPropertyChange('currentState')
+  },
+
   populate () {
     let queryRequest = this.get('queryRequest')
     let datamodel = this.get('datamodel')
-    datamodel.getData(queryRequest).then(this.handleQueryResult)
+    datamodel.getData(queryRequest)
+      .then((queryResult) => {
+        this.handleQueryResult(queryResult)
+      })
   },
 
   handleQueryResult (queryResult) {
@@ -75,23 +95,6 @@ export default Ember.Component.extend({
     }
   },
 
-  @computed('config', 'currentState', 'datamodelItems')
-  listConfig (config, currentState, datamodelItems) {
-    let properties = _.map(config.sorting || [], (sortDef) => {
-      return {
-        value: sortDef.name,
-        label: sortDef.label || sortDef.name
-      }
-    })
-    return {
-      items: datamodelItems,
-      sorting: {
-        active: currentState.sort,
-        properties
-      }
-    }
-  },
-
   @computed('config')
   listItemBunsenModel (config) {
     return config.listBunsenModel
@@ -100,6 +103,39 @@ export default Ember.Component.extend({
   @computed('config')
   listItemBunsenView (config) {
     return config.listBunsenView
+  },
+
+  @computed('config')
+  expandable (config) {
+    if (_.isUndefined(config.expandable)) {
+      return Boolean(config.expandedListBunsenView)
+    }
+    return config.expandable
+  },
+
+  @computed('config')
+  sortableProperties (config) {
+    return config.sortProperties
+  },
+
+  @computed('config', 'currentState', 'itemsFromDatamodel')
+  itemsForList (config, currentState, itemsFromDatamodel) {
+    // TODO: manage selection and expansion
+    return _.map(itemsFromDatamodel, (record) => {
+      return {
+        isSelected: false,
+        isExpanded: false,
+        record,
+        onSelect: (event, model) => {
+          this.onItemSelect(event, model)
+        }
+      }
+    })
+  },
+
+  onItemSelect (event, model) {
+    // event is jquery event and model is the full model passed to list item
+    console.log('An item was clicked')
   },
 
   @computed('config')
@@ -163,15 +199,6 @@ export default Ember.Component.extend({
   },
 
   actions: {
-    onCreate () {
-      this.notifications.addNotification({
-        message: 'Create Action fired',
-        type: 'success',
-        autoClear: true,
-        clearDuration: 2000
-      })
-    },
-
     onActionBarButtonClick (actionName) {
       console.log('actionBar button click')
       this.trigger(actionName)
@@ -181,6 +208,7 @@ export default Ember.Component.extend({
       console.log('Filter changed:')
       console.log(formValue)
       this.get('currentState').filter = formValue
+      this.notifyPropertyChange('currentState')
     },
 
     onSortChange (newSort) {
@@ -188,10 +216,10 @@ export default Ember.Component.extend({
       this.get('currentState').sort = newSort.map((item) => {
         return _.pick(item, ['value', 'direction'])
       })
-    },
-
-    onSelectionChange (selectChangeInfo) {
-      console.log('Selection has changed')
+      this.notifyPropertyChange('currentState')
+      this.changeContext()
+      this.goToFirstPage()
+      this.populate()
     },
 
     onCollapseAll () {
