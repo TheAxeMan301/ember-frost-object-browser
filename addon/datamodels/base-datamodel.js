@@ -74,6 +74,16 @@ export default Ember.Object.extend({
   },
 
   /**
+   * Get id for an object in the list.
+   * The 'id' field is standard for Ember Data. Override when the data is different.
+   * @param {Object} item object
+   * @returns {String} Id for the object
+   */
+  getId (item) {
+    return Ember.get(item, 'id')
+  },
+
+  /**
    * Configure the data model. Object browser passes a ref to itself.
    */
   configure (/* object-browser */) {

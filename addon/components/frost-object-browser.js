@@ -1,6 +1,6 @@
 import Ember from 'ember'
 import layout from '../templates/components/frost-object-browser'
-import {generateFacetView} from 'ember-frost-bunsen/utils'
+import {generateFacetView, deemberify} from 'ember-frost-bunsen/utils'
 import PreloadedDatamodel from '../datamodels/preloaded-datamodel'
 import computed from 'ember-computed-decorators'
 import _ from 'lodash'
@@ -9,7 +9,10 @@ export default Ember.Component.extend({
   layout,
   classNames: ['frost-object-browser'],
 
+  // Raw list of data from data model
   itemsFromDatamodel: [],
+  // Index in current data list to use for shift-click range
+  selectionAnchor: null,
 
   init () {
     this._super(...arguments)
@@ -21,7 +24,8 @@ export default Ember.Component.extend({
       sort: [],
       filter: {},
       expanded: false,
-      selectedItems: [],
+      selectedItems: {},
+      expandedItems: {},
       firstIndex: 0,
       numPages: 1,
       context: 0
@@ -88,8 +92,25 @@ export default Ember.Component.extend({
   handleQueryResult (queryResult) {
     let currentState = this.get('currentState')
     if (queryResult.context === currentState.context) {
+      let stateChanged = false
+      if (_.keys(currentState.selectedItems).length > 0) {
+        // We mutate the selectedItems map here. That changes state but is there any need to notify?
+        let idToIndexMap = this.getIdToIndexMap(queryResult.data)
+        let datamodel = this.get('datamodel')
+        let selectedItemList = _.keys(currentState.selectedItems)
+        for (let i = 0; i < selectedItemList.length; i++) {
+          if (!(selectedItemList[i] in idToIndexMap)) {
+            delete currentState.selectedItems[selectedItemList[i]]
+            stateChanged = true
+          }
+        }
+        if (stateChanged) {
+          this.notifyPropertyChange('currentState')
+        }
+      }
       this.setProperties({
         filterCount: queryResult.filterCount,
+        selectionAnchor: null,
         itemsFromDatamodel: queryResult.data
       })
     }
@@ -118,24 +139,36 @@ export default Ember.Component.extend({
     return config.sortProperties
   },
 
+  @computed('itemsFromDatamodel')
+  idToIndexMap (itemsFromDataModel) {
+    return this.getIdToIndexMap(itemsFromDataModel)
+  },
+
+  getIdToIndexMap (itemsFromDataModel) {
+    let idMap = {}
+    let datamodel = this.get('datamodel')
+    for (let index = 0; index < itemsFromDataModel.length; index++) {
+      idMap[datamodel.getId(itemsFromDataModel[index])] = index
+    }
+    return idMap
+  },
+
   @computed('config', 'currentState', 'itemsFromDatamodel')
   itemsForList (config, currentState, itemsFromDatamodel) {
-    // TODO: manage selection and expansion
-    return _.map(itemsFromDatamodel, (record) => {
+    let selectedItems = currentState.selectedItems
+    let datamodel = this.get('datamodel')
+    return _.map(itemsFromDatamodel, (record, index) => {
+      let id = datamodel.getId(record)
       return {
-        isSelected: false,
+        isSelected: id in selectedItems,
         isExpanded: false,
         record,
+        index,
         onSelect: (event, model) => {
           this.onItemSelect(event, model)
         }
       }
     })
-  },
-
-  onItemSelect (event, model) {
-    // event is jquery event and model is the full model passed to list item
-    console.log('An item was clicked')
   },
 
   @computed('config')
@@ -155,7 +188,7 @@ export default Ember.Component.extend({
 
   @computed('config', 'currentState')
   actionBarButtons (config, currentState) {
-    let numSelected = currentState.selectedItems.length
+    let numSelected = _.keys(currentState.selectedItems).length
     return _.map(config.actionBarButtons || [], (buttonSpec) => {
       let disabled = false
       switch (buttonSpec.enabled) {
@@ -163,10 +196,10 @@ export default Ember.Component.extend({
           disabled = false
           break
         case 'multi':
-          disabled = numSelected > 1
+          disabled = numSelected < 1
           break
         default:  // 'single'
-          disabled = numSelected === 1
+          disabled = numSelected !== 1
       }
       return _.defaults({}, buttonSpec, {
         priority: 'secondary',
@@ -200,26 +233,56 @@ export default Ember.Component.extend({
 
   actions: {
     onActionBarButtonClick (actionName) {
-      console.log('actionBar button click')
       this.trigger(actionName)
     },
 
     onFilterFormChange (formValue) {
-      console.log('Filter changed:')
-      console.log(formValue)
       this.get('currentState').filter = formValue
       this.notifyPropertyChange('currentState')
+      this.populate()
     },
 
     onSortChange (newSort) {
-      console.log('Sorting changed')
-      this.get('currentState').sort = newSort.map((item) => {
+      let pojoNewSort = deemberify(newSort)
+      this.get('currentState').sort = _.map(pojoNewSort, (item) => {
         return _.pick(item, ['value', 'direction'])
       })
       this.notifyPropertyChange('currentState')
       this.changeContext()
       this.goToFirstPage()
       this.populate()
+    },
+
+    onItemSelect (event, itemModel) {
+      let currentState = this.get('currentState')
+      let selectedItems = currentState.selectedItems
+      let datamodel = this.get('datamodel')
+      let selectedId = datamodel.getId(itemModel.record)
+      let newSelectionAnchor = null
+      if (itemModel.isSelected) {
+        delete selectedItems[selectedId]
+      } else {
+        let selectionAnchor = this.get('selectionAnchor')
+        if (event.shiftKey && selectionAnchor !== null) {
+          let itemList = this.get('itemsFromDatamodel')
+          for (
+            let i = Math.min(selectionAnchor, itemModel.index);
+            i < Math.max(selectionAnchor, itemModel.index) + 1;
+            i++
+          ) {
+            selectedItems[datamodel.getId(itemList[i])] = true
+          }
+        } else {
+          if (!Ember.$(event.target).hasClass('frost-list-selection-indicator')) {
+            selectedItems = {}
+          }
+          selectedItems[selectedId] = true
+          newSelectionAnchor = itemModel.index
+        }
+      }
+      this.set('selectionAnchor', newSelectionAnchor)
+      currentState.selectedItems = selectedItems
+      this.notifyPropertyChange('currentState')
     },
 
     onCollapseAll () {

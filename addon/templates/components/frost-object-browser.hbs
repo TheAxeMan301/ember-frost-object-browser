@@ -49,7 +49,7 @@
             (component 'frost-object-browser-list-item'
               bunsenModel=listItemBunsenModel
               bunsenView=listItemBunsenView
-              onSelectObjectBrowser=onItemSelect
+              onSelectObjectBrowser=(action 'onItemSelect')
             )
           )
           onCollapse=(action 'onCollapse')

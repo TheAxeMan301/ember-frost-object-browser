@@ -31,15 +31,16 @@ export default BaseDatamodel.extend({
    * @returns {Function} filter function
    */
   getStringFilter (filterObject) {
-    let searchString = filterObject.value.toLowerCase()
+    // _.toLower() is forgiving and convenient
+    let searchString = _.toLower(filterObject.value)
     let key = filterObject.key
     if (filterObject.match) {
       return function (item) {
-        return item[key].toString().toLowerCase() === searchString
+        return _.toLower(item[key]) === searchString
       }
     }
     return function (item) {
-      return item[key].toString().toLowerCase().indexOf(searchString) >= 0
+      return _.toLower(item[key]).indexOf(searchString) >= 0
     }
   },
 
@@ -74,10 +75,32 @@ export default BaseDatamodel.extend({
   getFilterFunc (filterObject) {
     let supportedFilters = this.get('supportedFilters')
     if (filterObject && filterObject.type in supportedFilters) {
-      return this.get(supportedFilters[filterObject.type])(filterObject)
+      return this[supportedFilters[filterObject.type]](filterObject)
     }
     return function (/* item */) {
       return true
+    }
+  },
+
+  /**
+   * Convert the filterObject that comes from the facets form into a spec that describes the filtering
+   * explicitly. Matches each field a filter type that can be configured in the datamodel section of the config.
+   * @param filterObject
+   * @returns {{type: string, filters: Array}}
+   */
+  getFilterSpec (filterObject) {
+    let filters = []
+    let filterTypes = this.get('filterTypes')
+    _.forEach(filterObject, (value, key) => {
+      filters.push({
+        type: filterTypes[key] || 'string',
+        value,
+        key
+      })
+    })
+    return {
+      type: 'and',
+      filters
     }
   },
 
@@ -122,8 +145,8 @@ export default BaseDatamodel.extend({
     let key = sortObject.value
     let descending = sortObject.direction === ':desc'
     return function (itemA, itemB) {
-      let valA = itemA[0][key].toString().toLowerCase()
-      let valB = itemB[0][key].toString().toLowerCase()
+      let valA = _.toLower(itemA[0][key])
+      let valB = _.toLower(itemB[0][key])
       if (valA < valB) {
         return descending ? 1 : -1
       } else if (valA > valB) {
@@ -198,7 +221,8 @@ export default BaseDatamodel.extend({
 
   getData (dataQuery) {
     let fullData = this.get('deemberifiedItems')
-    let filterFunc = this.getFilterFunc(dataQuery.filter)
+    let filterSpec = this.getFilterSpec(dataQuery.filter)
+    let filterFunc = this.getFilterFunc(filterSpec)
     let filteredData = fullData.filter(filterFunc)
     let sortedData = this.doSorting(filteredData, dataQuery.sort)
     let pagedData = sortedData.slice(
@@ -218,6 +242,7 @@ export default BaseDatamodel.extend({
     let datamodelConfig = objectBrowser.get('config').dataAdapter || {}
     let itemsProp = datamodelConfig.itemsProp || 'items'
     let sortTypes = datamodelConfig.sortTypes || {}
+    let filterTypes = datamodelConfig.filterTypes || {}
 
     objectBrowser.addObserver(itemsProp, this, 'itemsObserver')
 
@@ -225,7 +250,8 @@ export default BaseDatamodel.extend({
       items: objectBrowser.get(itemsProp),
       objectBrowser,
       itemsProp,
-      sortTypes
+      sortTypes,
+      filterTypes
     })
   },
 
