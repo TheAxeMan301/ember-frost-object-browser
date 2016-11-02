@@ -163,10 +163,7 @@ export default Ember.Component.extend({
         isSelected: id in selectedItems,
         isExpanded: false,
         record,
-        index,
-        onSelect: (event, model) => {
-          this.onItemSelect(event, model)
-        }
+        index
       }
     })
   },
@@ -179,6 +176,11 @@ export default Ember.Component.extend({
   @computed('config')
   filterBunsenView (config) {
     return generateFacetView(config.filterBunsenFacets)
+  },
+
+  @computed('currentState')
+  filterFormValue (currentState) {
+    return currentState.filter
   },
 
   @computed('config')
